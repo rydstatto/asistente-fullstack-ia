@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 // URL fija directa para garantizar que el frontend sepa exactamente a dónde ir sin depender de variables externas
-const API_URL = "https://vercel.app";
+const API_URL = "https://asistente-ia-backend-jilz709ey-ryds.vercel.app";
 
 function App() {
   const [mensaje, setMensaje] = useState("");
