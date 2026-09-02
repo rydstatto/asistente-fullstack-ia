@@ -2,7 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import os
-import google.generativeai as genai
+# Importación obligatoria del nuevo SDK para claves modernas tipo AQ
+from google import genai
 
 app = FastAPI(title="CoreIntellect API Backend con Gemini Real")
 
@@ -32,12 +33,15 @@ async def chat_endpoint(datos: MensajeClase):
         if not api_key:
             return {"response": "Error: La variable 'GEMINI_API_KEY' no está configurada en Vercel."}
             
-        genai.configure(api_key=api_key)
+        # El nuevo cliente lee automáticamente la variable GEMINI_API_KEY y acepta el formato AQ
+        client = genai.Client(api_key=api_key)
         
-        # Cambio definitivo: Usamos 'gemini-1.5-pro' que está presente en la API v1beta global
-        model = genai.GenerativeModel('gemini-1.5-pro')
+        # Invocación con la sintaxis correcta del nuevo SDK
+        response = client.models.generate_content(
+            model='gemini-1.5-flash',
+            contents=datos.message,
+        )
         
-        response = model.generate_content(datos.message)
         respuesta_ia = response.text
         
         registro_log = {
