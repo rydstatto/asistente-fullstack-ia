@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
-// URL fija directa para garantizar que el frontend sepa exactamente a dónde ir sin depender de variables externas
-const API_URL = "https://asistente-ia-backend.vercel.app";
+// URL fija directa que ya validamos y funciona a la perfección
+const API_URL = "https://vercel.app";
 
 function App() {
   const [mensaje, setMensaje] = useState("");
@@ -44,7 +44,6 @@ function App() {
     setCargando(true);
 
     try {
-      // Petición directa al servidor de producción en Vercel
       const response = await fetch(`${API_URL}/api/chat`, {
         method: "POST",
         headers: {
@@ -71,7 +70,7 @@ function App() {
       
       setHistorialChat((prev) => [
         ...prev,
-        { id: Date.now() + 1, emisor: "ia", texto: `Error del backend al procesar la IA: Expecting value: line 1 column 1 (Verifica que el servicio backend esté activo en Vercel)` }
+        { id: Date.now() + 1, emisor: "ia", texto: `Error del backend al procesar la IA: Expecting value: line 1 column 1` }
       ]);
     } finally {
       setCargando(false);
@@ -82,17 +81,26 @@ function App() {
     <div style={estilos.contenedorPrincipal}>
       {/* Barra Lateral Izquierda */}
       <aside style={estilos.barraLateral}>
-        <div style={estilos.logoSeccion}>
-          <span role="img" aria-label="bot">🤖</span> CoreIntellect
-        </div>
-        <p style={estilos.subtitulo}>Asistente Fullstack Real con conexión directa de servidor Backend.</p>
-        
-        <div style={estilos.estadoServidor}>
-          <span style={estilos.puntoVerde}></span> Servidor: Conectado
+        <div>
+          <div style={estilos.logoSeccion}>
+            <span role="img" aria-label="bot">🤖</span> CoreIntellect
+          </div>
+          <p style={estilos.subtitulo}>Asistente Fullstack Real con conexión directa de servidor Backend.</p>
+          
+          <div style={estilos.estadoServidor}>
+            <span style={estilos.puntoVerde}></span> Servidor: Conectado
+          </div>
+
+          <div style={estilos.cajaConsultas}>
+            <span role="img" aria-label="chat">💬</span> Consultas: {contadorConsultas}
+          </div>
         </div>
 
-        <div style={estilos.cajaConsultas}>
-          <span role="img" aria-label="chat">💬</span> Consultas: {contadorConsultas}
+        {/* Sección de Autor Agregada al final de la barra lateral */}
+        <div style={estilos.seccionAutor}>
+          <div style={estilos.autorEtiqueta}>Desarrollado por:</div>
+          <div style={estilos.autorNombre}>Raúl Fajardo</div>
+          <div style={estilos.autorRol}>Fullstack Developer</div>
         </div>
       </aside>
 
@@ -116,19 +124,25 @@ function App() {
         </div>
 
         {/* Formulario de Entrada */}
-        <form onSubmit={manejarEnvio} style={estilos.formulario}>
-          <input 
-            type="text" 
-            placeholder="Pregúntale a la IA real..." 
-            value={mensaje}
-            onChange={(e) => setMensaje(e.target.value)}
-            style={estilos.inputTexto}
-            disabled={cargando}
-          />
-          <button type="submit" style={estilos.botonEnviar} disabled={cargando}>
-            {cargando ? "..." : "Enviar 🚀"}
-          </button>
-        </form>
+        <div style={estilos.contenedorFormularioGlobal}>
+          <form onSubmit={manejarEnvio} style={estilos.formulario}>
+            <input 
+              type="text" 
+              placeholder="Pregúntale a la IA real..." 
+              value={mensaje}
+              onChange={(e) => setMensaje(e.target.value)}
+              style={estilos.inputTexto}
+              disabled={cargando}
+            />
+            <button type="submit" style={estilos.botonEnviar} disabled={cargando}>
+              {cargando ? "..." : "Enviar 🚀"}
+            </button>
+          </form>
+          {/* Pequeña firma elegante debajo de la barra de entrada */}
+          <div style={estilos.firmaFooter}>
+            CoreIntellect IA © 2026 | Creado y Diseñado por Raúl Fajardo
+          </div>
+        </div>
       </main>
     </div>
   );
@@ -149,6 +163,7 @@ const estilos = {
     padding: '25px',
     display: 'flex',
     flexDirection: 'column',
+    justifyContent: 'space-between', // Separa el contenido superior del autor abajo
     borderRight: '1px solid #23154c',
   },
   logoSeccion: {
@@ -184,6 +199,28 @@ const estilos = {
     borderRadius: '6px',
     fontSize: '14px',
     border: '1px solid #331b79',
+  },
+  seccionAutor: {
+    borderTop: '1px solid #23154c',
+    paddingTop: '20px',
+    marginBottom: '10px',
+  },
+  autorEtiqueta: {
+    fontSize: '11px',
+    color: '#7667a4',
+    textTransform: 'uppercase',
+    letterSpacing: '1px',
+  },
+  autorNombre: {
+    fontSize: '18px',
+    fontWeight: 'bold',
+    color: '#ffffff',
+    marginTop: '4px',
+  },
+  autorRol: {
+    fontSize: '13px',
+    color: '#9d7bfb',
+    marginTop: '2px',
   },
   areaChat: {
     flex: 1,
@@ -228,6 +265,11 @@ const estilos = {
     border: '1px solid #2d1d64',
     color: '#e2dcf7',
   },
+  contenedorFormularioGlobal: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+  },
   formulario: {
     display: 'flex',
     gap: '12px',
@@ -254,6 +296,12 @@ const estilos = {
     cursor: 'pointer',
     fontWeight: 'bold',
     transition: 'background 0.2s',
+  },
+  firmaFooter: {
+    fontSize: '11px',
+    color: '#4e4175',
+    textAlign: 'center',
+    marginTop: '4px',
   }
 };
 
