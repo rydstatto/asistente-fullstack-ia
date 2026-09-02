@@ -34,8 +34,8 @@ async def chat_endpoint(datos: MensajeClase):
             
         genai.configure(api_key=api_key)
         
-        # Cambio clave: Usamos 'gemini-pro', que es el identificador universal más compatible con claves GCP tipo AQ
-        model = genai.GenerativeModel('gemini-pro')
+        # Cambio definitivo: Usamos 'gemini-1.5-pro' que está presente en la API v1beta global
+        model = genai.GenerativeModel('gemini-1.5-pro')
         
         response = model.generate_content(datos.message)
         respuesta_ia = response.text
