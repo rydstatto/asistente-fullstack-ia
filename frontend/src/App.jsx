@@ -15,11 +15,27 @@ export default function App() {
     setInput('');
 
     try {
-      const response = await fetch('http://localhost:8000/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: textoEnviado })
-      });
+              // Simulamos el tiempo de procesamiento de la IA (1 segundo)
+        setTimeout(() => {
+          let respuestaBot = "¡Hola! Estoy procesando tu solicitud en CoreIntellect. ¿En qué código o arquitectura te puedo asesorar hoy?";
+          
+          // Respuestas automáticas dinámicas basadas en lo que escriba el usuario
+          const promptMin = textoEnviado.toLowerCase();
+          
+          if (promptMin.includes("hola")) {
+            respuestaBot = "¡Hola! Bienvenido al asistente de CoreIntellect. ¿Qué tecnología deseas estructurar hoy?";
+          } else if (promptMin.includes("nombre") || promptMin.includes("llamas")) {
+            respuestaBot = "Mi nombre es CoreIntellect AI, tu asistente fullstack inteligente.";
+          } else if (promptMin.includes("codigo") || promptMin.includes("python") || promptMin.includes("react")) {
+            respuestaBot = "¡Excelente elección! Puedo ayudarte a diseñar la estructura base de tus archivos y bases de datos.";
+          }
+
+          // Añadimos la respuesta a la pantalla de forma fluida
+          setMessages(prev => [...prev, { sender: 'ia', text: respuestaBot }]);
+          
+          // Actualizamos de manera opcional las métricas simuladas en pantalla
+          setMetrics(prev => ({ ...prev, total_chats: prev.total_chats + 1 }));
+        }, 1000);
       const data = await response.json();
       setMessages(prev => [...prev, { sender: 'ia', text: data.response }]);
     } catch (error) {
