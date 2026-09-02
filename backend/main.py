@@ -2,7 +2,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import os
-# Importamos la librería compatible con claves de Google Cloud
 import google.generativeai as genai
 
 app = FastAPI(title="CoreIntellect API Backend con Gemini Real")
@@ -28,23 +27,19 @@ async def ruta_raiz():
 @app.post("/api/chat")
 async def chat_endpoint(datos: MensajeClase):
     try:
-        # Obtenemos la clave secreta desde las variables de Vercel
         api_key = os.environ.get("GEMINI_API_KEY")
         
         if not api_key:
             return {"response": "Error: La variable 'GEMINI_API_KEY' no está configurada en Vercel."}
             
-        # Configuramos la librería con tu clave tipo AQ
         genai.configure(api_key=api_key)
         
-        # Inicializamos el modelo Gemini 1.5 Flash (óptimo y rápido para servidores)
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        # Cambio clave: Usamos 'gemini-pro', que es el identificador universal más compatible con claves GCP tipo AQ
+        model = genai.GenerativeModel('gemini-pro')
         
-        # Generamos el contenido real con la IA
         response = model.generate_content(datos.message)
         respuesta_ia = response.text
         
-        # Guardamos la consulta en el panel de métricas lateral
         registro_log = {
             "id": len(BD_INTERACCIONES_MEMORIA) + 1,
             "usuario": datos.message,
