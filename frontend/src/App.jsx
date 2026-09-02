@@ -20,10 +20,10 @@ function App() {
     try {
       const IA_URL = "https://huggingface.co";
       
-      // Token incrustado y variable de respaldo combinadas para evitar caídas de red en producción
-      const tokenIA = import.meta.env.VITE_HF_TOKEN || "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";
+      // Leemos de forma directa y limpia la variable configurada de forma segura en Vercel
+      const tokenIA = import.meta.env.VITE_HF_TOKEN;
 
-      // 2. Petición directa al servidor global de Meta Llama
+      // 2. Petición directa al servidor de IA
       const response = await fetch(IA_URL, {
         method: "POST",
         headers: {
@@ -39,13 +39,15 @@ function App() {
       const data = await response.json();
       let respuestaIA = "";
 
-      // Procesar y limpiar el texto devuelto por la IA
+      // Estructura de procesamiento robusta para las variantes de respuesta de Hugging Face
       if (Array.isArray(data) && data[0]?.generated_text) {
         respuestaIA = data[0].generated_text.replace(`Eres CoreIntellect AI, un asistente fullstack experto. Responde de forma clara, con ejemplos de código estructurado y en español a la siguiente solicitud: ${texto}`, "").trim();
       } else if (data && data.generated_text) {
         respuestaIA = data.generated_text.replace(`Eres CoreIntellect AI, un asistente fullstack experto. Responde de forma clara, con ejemplos de código estructurado y en español a la siguiente solicitud: ${texto}`, "").trim();
+      } else if (data?.error) {
+        respuestaIA = `Servidor ocupado: ${data.error}. Por favor, envía el mensaje nuevamente en unos segundos.`;
       } else {
-        respuestaIA = "No se pudo procesar la respuesta en este momento. Por favor, intenta de nuevo.";
+        respuestaIA = "La IA está procesando la solicitud, por favor reintenta el envío.";
       }
 
       // 3. Pintar la respuesta de la IA real en el chat
