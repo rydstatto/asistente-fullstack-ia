@@ -1,12 +1,13 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import sys
+import os
+# Importamos la librería oficial de Google para usar Gemini
+from google import genai
 
-# Inicialización estándar requerida por Vercel
-app = FastAPI(title="CoreIntellect API Backend")
+app = FastAPI(title="CoreIntellect API Backend con IA Real")
 
-# Habilitar CORS para permitir peticiones del frontend
+# Mantener CORS activo para que el frontend no se bloquee
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -22,14 +23,24 @@ class MensajeClase(BaseModel):
 
 @app.get("/")
 async def ruta_raiz():
-    return {"status": "Servidor activo", "engine": "FastAPI en Vercel"}
+    return {"status": "Servidor con IA Activo"}
 
 @app.post("/api/chat")
 async def chat_endpoint(datos: MensajeClase):
     try:
-        # Texto de respuesta de prueba para validar el enlace completo
-        respuesta_ia = f"¡Servidor en línea con éxito! Procesado mensaje: '{datos.message}'"
+        # Inicializa el cliente de Gemini leyendo la variable de entorno
+        # Vercel buscará automáticamente 'GEMINI_API_KEY'
+        client = genai.Client()
         
+        # Le pedimos a Gemini 2.5 Flash que procese el mensaje del usuario
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=datos.message,
+        )
+        
+        respuesta_ia = response.text
+        
+        # Guardamos en la memoria del panel lateral
         registro_log = {
             "id": len(BD_INTERACCIONES_MEMORIA) + 1,
             "usuario": datos.message,
@@ -40,8 +51,7 @@ async def chat_endpoint(datos: MensajeClase):
         return {"response": respuesta_ia}
         
     except Exception as e:
-        # Esto enviará el error directamente a la pantalla del frontend para que sepamos exactamente qué falló
-        return {"response": f"Error interno en código Python: {str(e)}"}
+        return {"response": f"Error al consultar la IA: Asegúrate de configurar tu token de API. Detalle: {str(e)}"}
 
 @app.get("/api/metrics")
 async def obtener_metricas():
