@@ -34,3 +34,4 @@
         console.error(error);
         setMessages(prev => [...prev, { sender: 'ia', text: 'Error de ejecución directa con el servidor de IA.' }]);
     }
+export default App;
