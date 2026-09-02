@@ -8,6 +8,14 @@
   ],
   "routes": [
     {
+      "src": "/api/chat",
+      "dest": "main.py"
+    },
+    {
+      "src": "/api/metrics",
+      "dest": "main.py"
+    },
+    {
       "src": "/(.*)",
       "dest": "main.py"
     }
