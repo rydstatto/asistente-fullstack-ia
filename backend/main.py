@@ -4,7 +4,7 @@ from pydantic import BaseModel
 import os
 from google import genai
 
-app = FastAPI(title="CoreIntellect API Backend con Gemini Real")
+app = FastAPI(title="CoreIntellect API Backend con Gemini Actualizado")
 
 # Mantener CORS activo para la comunicación con el frontend
 app.add_middleware(
@@ -34,10 +34,9 @@ async def chat_endpoint(datos: MensajeClase):
             
         client = genai.Client(api_key=api_key)
         
-        # Cambio clave: Usamos 'gemini-2.5-flash', el cual está mapeado en la arquitectura global 
-        # y es el más compatible con autenticaciones de proyectos híbridos
+        # Cambio crítico: Usamos 'gemini-3.6-flash' como lo exige explícitamente el servidor de Google
         response = client.models.generate_content(
-            model='gemini-2.5-flash',
+            model='gemini-3.6-flash',
             contents=datos.message,
         )
         
