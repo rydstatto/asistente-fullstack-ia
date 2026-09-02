@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
-// Configuración automática de la URL de conexión (Vercel o Local)
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+// URL fija directa para garantizar que el frontend sepa exactamente a dónde ir sin depender de variables externas
+const API_URL = "https://vercel.app";
 
 function App() {
   const [mensaje, setMensaje] = useState("");
@@ -11,7 +11,7 @@ function App() {
   const [contadorConsultas, setContadorConsultas] = useState(0);
   const [cargando, setCargando] = useState(false);
 
-  // Obtiene el contador de consultas real del backend al cargar la página
+  // Consulta el contador de consultas real del backend
   useEffect(() => {
     const consultarMetricas = async () => {
       try {
@@ -34,9 +34,8 @@ function App() {
     if (!mensaje.trim() || cargando) return;
 
     const mensajeUsuario = mensaje.trim();
-    setMensaje(""); // Limpiar el input inmediatamente
+    setMensaje(""); 
 
-    // Agregar el mensaje del usuario a la pantalla
     const nuevosMensajes = [
       ...historialChat,
       { id: Date.now(), emisor: "usuario", texto: mensajeUsuario }
@@ -45,7 +44,7 @@ function App() {
     setCargando(true);
 
     try {
-      // Petición HTTP POST controlada hacia tu backend
+      // Petición directa al servidor de producción en Vercel
       const response = await fetch(`${API_URL}/api/chat`, {
         method: "POST",
         headers: {
@@ -54,26 +53,22 @@ function App() {
         body: JSON.stringify({ message: mensajeUsuario }),
       });
 
-      // Si el servidor responde con un error HTML (como 404 o 500) se captura aquí
       if (!response.ok) {
         throw new Error(`Código de error: ${response.status}`);
       }
 
       const data = await response.json();
 
-      // Guardar la respuesta de la IA en pantalla
       setHistorialChat((prev) => [
         ...prev,
         { id: Date.now() + 1, emisor: "ia", texto: data.response || "No se generó contenido válido." }
       ]);
       
-      // Actualizar el contador del panel lateral
       setContadorConsultas((prev) => prev + 1);
 
     } catch (error) {
       console.error("Error crítico de comunicación con el backend:", error);
       
-      // Imprimir el mensaje amigable en pantalla en lugar de colapsar la app
       setHistorialChat((prev) => [
         ...prev,
         { id: Date.now() + 1, emisor: "ia", texto: `Error del backend al procesar la IA: Expecting value: line 1 column 1 (Verifica que el servicio backend esté activo en Vercel)` }
@@ -85,7 +80,7 @@ function App() {
 
   return (
     <div style={estilos.contenedorPrincipal}>
-      {/* Barra Lateral Izquierda (Panel de Métricas) */}
+      {/* Barra Lateral Izquierda */}
       <aside style={estilos.barraLateral}>
         <div style={estilos.logoSeccion}>
           <span role="img" aria-label="bot">🤖</span> CoreIntellect
@@ -101,7 +96,7 @@ function App() {
         </div>
       </aside>
 
-      {/* Contenedor Derecho (Área del Chat) */}
+      {/* Contenedor Derecho */}
       <main style={estilos.areaChat}>
         <h2 style={estilos.tituloChat}>Panel de Control Fullstack / IA Real</h2>
         
@@ -139,7 +134,6 @@ function App() {
   );
 }
 
-// EstilosCSS incrustados en JavaScript para mantener el diseño idéntico al de tu captura
 const estilos = {
   contenedorPrincipal: {
     display: 'flex',
