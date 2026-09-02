@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import './App.css'; // Asegúrate de tener este archivo o cámbialo por tu CSS actual
 
 function App() {
   const [input, setInput] = useState('');
@@ -21,11 +20,14 @@ function App() {
     try {
       const IA_URL = "https://huggingface.co";
       
-      // 2. Petición directa al servidor global de Meta Llama usando tu token guardado en Vercel
+      // Token incrustado y variable de respaldo combinadas para evitar caídas de red en producción
+      const tokenIA = import.meta.env.VITE_HF_TOKEN || "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";
+
+      // 2. Petición directa al servidor global de Meta Llama
       const response = await fetch(IA_URL, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${import.meta.env.VITE_HF_TOKEN}`,
+          "Authorization": `Bearer ${tokenIA}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -37,10 +39,11 @@ function App() {
       const data = await response.json();
       let respuestaIA = "";
 
-      if (data && data.generated_text) {
-        respuestaIA = data.generated_text.replace(`Eres CoreIntellect AI, un asistente fullstack experto. Responde de forma clara, con ejemplos de código estructurado y en español a la siguiente solicitud: ${texto}`, "").trim();
-      } else if (Array.isArray(data) && data[0]?.generated_text) {
+      // Procesar y limpiar el texto devuelto por la IA
+      if (Array.isArray(data) && data[0]?.generated_text) {
         respuestaIA = data[0].generated_text.replace(`Eres CoreIntellect AI, un asistente fullstack experto. Responde de forma clara, con ejemplos de código estructurado y en español a la siguiente solicitud: ${texto}`, "").trim();
+      } else if (data && data.generated_text) {
+        respuestaIA = data.generated_text.replace(`Eres CoreIntellect AI, un asistente fullstack experto. Responde de forma clara, con ejemplos de código estructurado y en español a la siguiente solicitud: ${texto}`, "").trim();
       } else {
         respuestaIA = "No se pudo procesar la respuesta en este momento. Por favor, intenta de nuevo.";
       }
@@ -58,7 +61,7 @@ function App() {
   };
 
   return (
-    <div style={{ display: 'flex', height: '100vh', background: '#0c0a1c', color: '#white', fontFamily: 'sans-serif' }}>
+    <div style={{ display: 'flex', height: '100vh', background: '#0c0a1c', color: 'white', fontFamily: 'sans-serif' }}>
       {/* Barra Lateral */}
       <div style={{ width: '280px', background: '#131129', padding: '20px', borderRight: '1px solid #252147', display: 'flex', flexDirection: 'column', gap: '20px' }}>
         <h2 style={{ color: '#a277ff', margin: 0 }}>🤖 CoreIntellect</h2>
@@ -83,7 +86,8 @@ function App() {
               alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start',
               background: msg.sender === 'user' ? '#613dc1' : '#1f1b3d',
               color: 'white',
-              border: msg.sender === 'user' ? 'none' : '1px solid #3d3575'
+              border: msg.sender === 'user' ? 'none' : '1px solid #3d3575',
+              whiteSpace: 'pre-wrap'
             }}>
               {msg.text}
             </div>
@@ -97,7 +101,7 @@ function App() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ej. Estructura un modelo de conexión a base de datos en Python..." 
-            onKeyPress={(e) => e.key === 'Enter' && enviarMensaje()}
+            onKeyDown={(e) => e.key === 'Enter' && enviarMensaje()}
             style={{ flex: 1, background: '#1f1b3d', border: '1px solid #3d3575', borderRadius: '8px', padding: '12px', color: 'white', fontSize: '0.95rem', outline: 'none' }}
           />
           <button onClick={enviarMensaje} style={{ background: '#613dc1', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>Enviar 🚀</button>
