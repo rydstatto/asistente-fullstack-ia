@@ -2,12 +2,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import os
-# Importamos la librería oficial de Google para usar Gemini
-from google import genai
+# Importamos la librería compatible con claves de Google Cloud
+import google.generativeai as genai
 
-app = FastAPI(title="CoreIntellect API Backend con IA Real")
+app = FastAPI(title="CoreIntellect API Backend con Gemini Real")
 
-# Mantener CORS activo para que el frontend no se bloquee
+# Mantener CORS activo para la comunicación con el frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -23,24 +23,28 @@ class MensajeClase(BaseModel):
 
 @app.get("/")
 async def ruta_raiz():
-    return {"status": "Servidor con IA Activo"}
+    return {"status": "Servidor con Gemini Activo"}
 
 @app.post("/api/chat")
 async def chat_endpoint(datos: MensajeClase):
     try:
-        # Inicializa el cliente de Gemini leyendo la variable de entorno
-        # Vercel buscará automáticamente 'GEMINI_API_KEY'
-        client = genai.Client()
+        # Obtenemos la clave secreta desde las variables de Vercel
+        api_key = os.environ.get("GEMINI_API_KEY")
         
-        # Le pedimos a Gemini 2.5 Flash que procese el mensaje del usuario
-        response = client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=datos.message,
-        )
+        if not api_key:
+            return {"response": "Error: La variable 'GEMINI_API_KEY' no está configurada en Vercel."}
+            
+        # Configuramos la librería con tu clave tipo AQ
+        genai.configure(api_key=api_key)
         
+        # Inicializamos el modelo Gemini 1.5 Flash (óptimo y rápido para servidores)
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        
+        # Generamos el contenido real con la IA
+        response = model.generate_content(datos.message)
         respuesta_ia = response.text
         
-        # Guardamos en la memoria del panel lateral
+        # Guardamos la consulta en el panel de métricas lateral
         registro_log = {
             "id": len(BD_INTERACCIONES_MEMORIA) + 1,
             "usuario": datos.message,
@@ -51,7 +55,7 @@ async def chat_endpoint(datos: MensajeClase):
         return {"response": respuesta_ia}
         
     except Exception as e:
-        return {"response": f"Error al consultar la IA: Asegúrate de configurar tu token de API. Detalle: {str(e)}"}
+        return {"response": f"Error de comunicación con la IA: {str(e)}"}
 
 @app.get("/api/metrics")
 async def obtener_metricas():
