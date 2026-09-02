@@ -14,8 +14,8 @@ export default function App() {
     const textoEnviado = input;
     setInput('');
 
-    try {
-              // Simulamos el tiempo de procesamiento de la IA (1 segundo)
+        try {
+        // Simulamos el tiempo de procesamiento de la IA (1 segundo)
         setTimeout(() => {
           let respuestaBot = "¡Hola! Estoy procesando tu solicitud en CoreIntellect. ¿En qué código o arquitectura te puedo asesorar hoy?";
           
@@ -36,12 +36,10 @@ export default function App() {
           // Actualizamos de manera opcional las métricas simuladas en pantalla
           setMetrics(prev => ({ ...prev, total_chats: prev.total_chats + 1 }));
         }, 1000);
-      const data = await response.json();
-      setMessages(prev => [...prev, { sender: 'ia', text: data.response }]);
+
     } catch (error) {
-      setMessages(prev => [...prev, { sender: 'ia', text: 'Error al conectar con el servidor.' }]);
+        setMessages(prev => [...prev, { sender: 'ia', text: 'Error al procesar la solicitud.' }]);
     }
-  };
 
   const verMetricas = async () => {
     setTab('metrics');
