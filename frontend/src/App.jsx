@@ -14,35 +14,49 @@ function App() {
   // Consulta el contador de consultas real del backend
   useEffect(() => {
     const consultarMetricas = async () => {
-      try {
-        const response = await fetch(`${API_URL}/api/metrics`);
-        if (response.ok) {
-          const data = await response.json();
-          if (data.total_consultas !== undefined) {
-            setContadorConsultas(data.total_consultas);
-          }
-        }
-      } catch (err) {
-        console.error("No se pudieron cargar las métricas iniciales:", err);
-      }
-    };
-    consultarMetricas();
-  }, []);
+      try {  try {
+    // 1. Envío controlado hacia tu API en la nube
+    const response = await fetch(`${API_URL}/api/chat`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ message: mensajeUsuario }),
+    });
 
-  const manejarEnvio = async (e) => {
-    e.preventDefault();
-    if (!mensaje.trim() || cargando) return;
+    if (!response.ok) {
+      throw new Error(`Código de error: ${response.status}`);
+    }
 
-    const mensajeUsuario = mensaje.trim();
-    setMensaje(""); 
+    // 🔥 LA MEJORA DE SEGURIDAD CLAVE: Leemos primero como texto plano
+    const text = await response.text();
+    
+    // Si el backend se durmió y devolvió un string vacío, el flujo no se rompe
+    if (!text || text.trim().length === 0) {
+      throw new Error("El servidor devolvió una respuesta vacía.");
+    }
 
-    const nuevosMensajes = [
-      ...historialChat,
-      { id: Date.now(), emisor: "usuario", texto: mensajeUsuario }
-    ];
-    setHistorialChat(nuevosMensajes);
-    setCargando(true);
+    // Convertimos a JSON manualmente una vez que confirmamos que sí hay datos
+    const data = JSON.parse(text);
 
+    setHistorialChat((prev) => [
+      ...prev,
+      { id: Date.now() + 1, emisor: "ia", texto: data.response || "No se generó contenido válido." }
+    ]);
+    
+    setContadorConsultas((prev) => prev + 1);
+
+  } catch (error) {
+    console.error("Error crítico de comunicación con el backend:", error);
+    
+    // Captura el error en silencio e inyecta un aviso amigable en la pantalla
+    setHistorialChat((prev) => [
+      ...prev,
+      { id: Date.now() + 1, emisor: "ia", texto: "Aviso de red: El servidor efímero se durmió por inactividad pero el motor de Python ya despertó. Por favor, reenvía tu mensaje ahora." }
+    ]);
+  } finally {
+    setCargando(false);
+  }
     try {
       const response = await fetch(`${API_URL}/api/chat`, {
         method: "POST",
