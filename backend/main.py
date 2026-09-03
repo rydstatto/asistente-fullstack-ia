@@ -6,7 +6,7 @@ from google import genai
 
 app = FastAPI(title="CoreIntellect API Backend")
 
-# Mantener CORS activo para la comunicación segura con el frontend
+# Habilitar CORS para permitir que tu frontend morado se conecte de forma segura
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -29,36 +29,34 @@ def chat_endpoint(datos: MensajeClase):
     try:
         api_key = os.environ.get("GEMINI_API_KEY")
         if not api_key:
-            return {"response": "Error interno: Falta la clave de API en el servidor."}
+            return {"response": "Error: La clave GEMINI_API_KEY no está configurada en Vercel."}
             
-        # Conexión directa y rápida con el nuevo cliente oficial
+        # Inicialización del cliente con el SDK síncrono ultra veloz
         client = genai.Client(api_key=api_key)
         
-        # Consulta síncrona directa para evitar que Vercel cierre la conexión antes de tiempo
+        # Consulta síncrona directa a Gemini 3.6-Flash
         response = client.models.generate_content(
             model='gemini-3.6-flash',
             contents=datos.message,
         )
         
-        # Extraemos el texto crudo devuelto por la Inteligencia Artificial
-        respuesta_real_ia = response.text
+        respuesta_real = response.text
         
-        if not respuesta_real_ia:
-            respuesta_real_ia = "La IA procesó la solicitud pero devolvió un resultado en blanco. Intenta replantear la pregunta."
+        if not respuesta_real:
+            respuesta_real = "El motor de IA no devolvió texto. Por favor, reintenta tu pregunta."
 
-        # Guardar en la lista global para el panel de métricas lateral
-        registro_log = {
+        # Registrar la interacción en memoria para el contador de consultas lateral
+        registro = {
             "id": len(BD_INTERACCIONES_MEMORIA) + 1,
             "usuario": datos.message,
-            "ia": respuesta_real_ia
+            "ia": respuesta_real
         }
-        BD_INTERACCIONES_MEMORIA.append(registro_log)
+        BD_INTERACCIONES_MEMORIA.append(registro)
         
-        return {"response": respuesta_real_ia}
+        return {"response": respuesta_real}
         
     except Exception as e:
-        # En caso de cualquier error real con Google, lo imprime en la pantalla para saber qué pasó
-        return {"response": f"Error de conexión con los servidores de Gemini: {str(e)}"}
+        return {"response": f"Error de comunicación con Gemini: {str(e)}"}
 
 @app.get("/api/metrics")
 def obtener_metricas():
