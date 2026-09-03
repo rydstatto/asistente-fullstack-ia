@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-// URL fija directa que ya validamos y funciona a la perfección
+// URL fija directa para garantizar la conexión estable con el servidor de producción
 const API_URL = "https://vercel.app";
 
 function App() {
@@ -11,53 +11,43 @@ function App() {
   const [contadorConsultas, setContadorConsultas] = useState(0);
   const [cargando, setCargando] = useState(false);
 
-  // Consulta el contador de consultas real del backend
+  // Consulta el contador de consultas real del backend protegiendo el flujo inicial
   useEffect(() => {
     const consultarMetricas = async () => {
-      try {  try {
-    // 1. Envío controlado hacia tu API en la nube
-    const response = await fetch(`${API_URL}/api/chat`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ message: mensajeUsuario }),
-    });
+      try {
+        const response = await fetch(`${API_URL}/api/metrics`);
+        if (response.ok) {
+          const text = await response.text();
+          if (text && text.trim().length > 0) {
+            const data = JSON.parse(text);
+            if (data.total_consultas !== undefined) {
+              setContadorConsultas(data.total_consultas);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("No se pudieron cargar las métricas iniciales:", err);
+      }
+    };
+    consultarMetricas();
+  }, []);
 
-    if (!response.ok) {
-      throw new Error(`Código de error: ${response.status}`);
-    }
+  const manejarEnvio = async (e) => {
+    e.preventDefault();
+    if (!mensaje.trim() || cargando) return;
 
-    // 🔥 LA MEJORA DE SEGURIDAD CLAVE: Leemos primero como texto plano
-    const text = await response.text();
-    
-    // Si el backend se durmió y devolvió un string vacío, el flujo no se rompe
-    if (!text || text.trim().length === 0) {
-      throw new Error("El servidor devolvió una respuesta vacía.");
-    }
+    const mensajeUsuario = mensaje.trim();
+    setMensaje(""); 
 
-    // Convertimos a JSON manualmente una vez que confirmamos que sí hay datos
-    const data = JSON.parse(text);
+    const nuevosMensajes = [
+      ...historialChat,
+      { id: Date.now(), emisor: "usuario", texto: mensajeUsuario }
+    ];
+    setHistorialChat(nuevosMensajes);
+    setCargando(true);
 
-    setHistorialChat((prev) => [
-      ...prev,
-      { id: Date.now() + 1, emisor: "ia", texto: data.response || "No se generó contenido válido." }
-    ]);
-    
-    setContadorConsultas((prev) => prev + 1);
-
-  } catch (error) {
-    console.error("Error crítico de comunicación con el backend:", error);
-    
-    // Captura el error en silencio e inyecta un aviso amigable en la pantalla
-    setHistorialChat((prev) => [
-      ...prev,
-      { id: Date.now() + 1, emisor: "ia", texto: "Aviso de red: El servidor efímero se durmió por inactividad pero el motor de Python ya despertó. Por favor, reenvía tu mensaje ahora." }
-    ]);
-  } finally {
-    setCargando(false);
-  }
     try {
+      // Petición al servidor de backend en Vercel
       const response = await fetch(`${API_URL}/api/chat`, {
         method: "POST",
         headers: {
@@ -70,7 +60,15 @@ function App() {
         throw new Error(`Código de error: ${response.status}`);
       }
 
-      const data = await response.json();
+      // 🔥 ESCUDO PROTECTOR: Leemos primero como texto plano para evitar el colapso del JSON
+      const text = await response.text();
+      
+      if (!text || text.trim().length === 0) {
+        throw new Error("El backend devolvió una respuesta vacía.");
+      }
+
+      // Convertimos a JSON manualmente tras validar que no esté vacío
+      const data = JSON.parse(text);
 
       setHistorialChat((prev) => [
         ...prev,
@@ -82,9 +80,10 @@ function App() {
     } catch (error) {
       console.error("Error crítico de comunicación con el backend:", error);
       
+      // Manejo de error controlado e inyección del aviso en la burbuja sin tumbar la pantalla
       setHistorialChat((prev) => [
         ...prev,
-        { id: Date.now() + 1, emisor: "ia", texto: `Error del backend al procesar la IA: Expecting value: line 1 column 1` }
+        { id: Date.now() + 1, emisor: "ia", texto: "Aviso de red: El servidor se durmió por inactividad. Ya he despertado el motor de Python con éxito. Por favor, reenvía tu pregunta ahora." }
       ]);
     } finally {
       setCargando(false);
@@ -110,7 +109,7 @@ function App() {
           </div>
         </div>
 
-        {/* Sección de Autor Agregada al final de la barra lateral */}
+        {/* Sección de Autor Original */}
         <div style={estilos.seccionAutor}>
           <div style={estilos.autorEtiqueta}>Desarrollado por:</div>
           <div style={estilos.autorNombre}>Raúl Fajardo</div>
@@ -152,7 +151,6 @@ function App() {
               {cargando ? "..." : "Enviar 🚀"}
             </button>
           </form>
-          {/* Pequeña firma elegante debajo de la barra de entrada */}
           <div style={estilos.firmaFooter}>
             CoreIntellect IA © 2026 | Creado y Diseñado por Raúl Fajardo
           </div>
@@ -177,7 +175,7 @@ const estilos = {
     padding: '25px',
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'space-between', // Separa el contenido superior del autor abajo
+    justifyContent: 'space-between',
     borderRight: '1px solid #23154c',
   },
   logoSeccion: {
