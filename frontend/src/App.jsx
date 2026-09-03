@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 // La URL limpia de producción de tu backend
-const API_URL = "https://vercel.app";
+const API_URL = "https://asistente-ia-backend.vercel.app";
 
 function App() {
   const [mensaje, setMensaje] = useState("");
