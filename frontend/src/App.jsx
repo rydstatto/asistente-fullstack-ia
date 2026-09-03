@@ -43,7 +43,7 @@ function App() {
     setHistorialChat(nuevosMensajes);
     setCargando(true);
 
-    try {
+        try {
       const response = await fetch(`${API_URL}/api/chat`, {
         method: "POST",
         headers: {
@@ -53,10 +53,18 @@ function App() {
       });
 
       if (!response.ok) {
-        throw new Error(`Código de error: ${response.status}`);
+        throw new Error(`Código de estado del servidor: ${response.status}`);
       }
 
-      const data = await response.json();
+      // Leemos primero como texto plano para evitar que explote el JSON si la red falla
+      const text = await response.text();
+      
+      if (!text || text.trim().length === 0) {
+        throw new Error("El servidor devolvió una respuesta vacía.");
+      }
+
+      // Convertimos a JSON manualmente de forma controlada
+      const data = JSON.parse(text);
 
       setHistorialChat((prev) => [
         ...prev,
@@ -66,12 +74,15 @@ function App() {
       setContadorConsultas((prev) => prev + 1);
 
     } catch (error) {
-      console.error("Error crítico de comunicación con el backend:", error);
+      console.error("Error capturado en la petición:", error);
+      
+      // Te inyectará en la pantalla el mensaje de error real del sistema para diagnosticar
       setHistorialChat((prev) => [
         ...prev,
-        { id: Date.now() + 1, emisor: "ia", texto: "Error al obtener respuesta del servidor. Intente de nuevo." }
+        { id: Date.now() + 1, emisor: "ia", texto: `Fallo interno del flujo: ${error.message}` }
       ]);
-    } finally {
+    }
+      finally {
       setCargando(false);
     }
   };
